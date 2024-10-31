@@ -27,3 +27,5 @@ dist-ssr
 #serverside
 server/config
 .env
+
+docker/mongo

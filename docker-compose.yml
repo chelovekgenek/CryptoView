@@ -1,0 +1,31 @@
+name: crypto-view
+version: '3.7'
+
+services:
+  crypto-view-base:
+    image: crypto-view-base
+    build:
+      context: .
+      dockerfile: ./docker/Dockerfile
+
+  mongodb:
+    container_name: mongodb
+    image: mongo:latest
+    ports:
+      - '27017:27017'
+    volumes:
+      - './docker/mongo/data:/data/db'
+
+  dapp:
+    image: crypto-view-base
+    command: npm run dev
+    depends_on:
+      - crypto-view-base
+      - mongodb
+    volumes:
+      - './src:/usr/src/app/src'
+      - './server:/usr/src/app/server'
+    env_file:
+      - ./.env
+    ports:
+      - 5173:5173

@@ -12,7 +12,7 @@ export default function Sidebar({ children }) {
       <nav className="h-full flex flex-col bg-white border-r shadow-lg">
         <div className="p-4 pb-2 flex justify-between items-center">
           <img
-            src="/public/assets/cryptoview.png"
+            src="/assets/cryptoview.png"
             className={`overflow-hidden transition-all bg-black rounded-3xl ${
               expanded ? "w-24" : "w-0"
             }`}
