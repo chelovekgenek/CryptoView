@@ -1,12 +1,13 @@
 const mongoose = require("mongoose");
+const { sanitizeIpfsUri, startsWith } = require("../utils");
 const Web3 = require("web3");
 
 const { Schema } = mongoose;
 
 const NftMetadataSchema = new Schema({
   name: { type: String, required: true },
-  project: { type: String, required: true },
-  description: { type: String, required: true },
+  project: { type: String, required: false },
+  description: { type: String, required: false },
   image: { type: String, required: true },
 });
 
@@ -30,6 +31,9 @@ exports.create = (doc) => {
   doc.nftCollateralContract = Web3.utils.toChecksumAddress(
     doc.nftCollateralContract
   );
+  if (doc.metadata.image && startsWith(doc.metadata.image, "ipfs")) {
+    doc.metadata.image = sanitizeIpfsUri(doc.metadata.image);
+  }
   return NftModel.create(doc);
 };
 

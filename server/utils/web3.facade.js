@@ -1,7 +1,12 @@
 const { Web3, HttpProvider } = require("web3");
 const config = require("../config");
 const { default: axios } = require("axios");
-const { sanitizeString, isJsonString } = require("./web3.helpers");
+const {
+  startsWith,
+  sanitizeString,
+  isJsonString,
+  sanitizeIpfsUri,
+} = require("./index");
 
 class Web3Facade {
   constructor() {
@@ -9,9 +14,37 @@ class Web3Facade {
     this.web3 = new Web3(provider);
   }
 
+  async getNFTMetadata(nftCollateralContract, nftCollateralId) {
+    const erc721Contract = new this.web3.eth.Contract(
+      config.web3.interfaces.erc721.abi,
+      nftCollateralContract
+    );
+    const isErc721 = await erc721Contract.methods
+      .supportsInterface(config.web3.interfaces.erc721.name)
+      .call();
+    console.log("isErc721", isErc721);
+    if (isErc721) {
+      return this.getErc721Metadata(nftCollateralContract, nftCollateralId);
+    }
+
+    const erc1155Contract = new this.web3.eth.Contract(
+      config.web3.interfaces.erc1155.abi,
+      nftCollateralContract
+    );
+    const isErc1155 = await erc1155Contract.methods
+      .supportsInterface(config.web3.interfaces.erc1155.name)
+      .call();
+    console.log("isErc1155", isErc1155);
+    if (isErc1155) {
+      return this.getErc1155Metadata(nftCollateralContract, nftCollateralId);
+    }
+
+    return null;
+  }
+
   async getErc721Metadata(nftCollateralContract, nftCollateralId) {
     const contractInstance = new this.web3.eth.Contract(
-      config.web3.ABIs.erc721,
+      config.web3.interfaces.erc721.abi,
       nftCollateralContract
     );
     const tokenURI = await contractInstance.methods
@@ -26,7 +59,7 @@ class Web3Facade {
 
   async getErc1155Metadata(nftCollateralContract, nftCollateralId) {
     const contractInstance = new this.web3.eth.Contract(
-      config.web3.ABIs.erc1155,
+      config.web3.interfaces.erc1155.abi,
       nftCollateralContract
     );
     const tokenURI = await contractInstance.methods.uri(nftCollateralId).call();
@@ -38,18 +71,17 @@ class Web3Facade {
   }
 
   async getNFTMetadataByUri(tokenURI, nftCollateralContract, nftCollateralId) {
-    const startsWith = (str) =>
-      typeof tokenURI === "string" && tokenURI.substring(0, str.length) === str;
-    console.log(tokenURI, nftCollateralContract, nftCollateralId);
-    if (startsWith("http")) {
+    if (startsWith(tokenURI, "http")) {
       try {
-        const res = await axios.get(tokenURI);
-        const sanitizedStr = sanitizeString(res.data);
-        if (isJsonString(sanitizedStr)) {
-          return JSON.parse(sanitizedStr);
-        } else {
-          return res.data;
+        const { data } = await axios.get(tokenURI);
+        console.log(tokenURI, data);
+        if (typeof data === "string") {
+          const sanitizedStr = sanitizeString(data);
+          if (isJsonString(sanitizedStr)) {
+            return JSON.parse(sanitizedStr);
+          }
         }
+        return data;
       } catch (err) {
         console.log(
           "[WARN] Error retrieving HTTP metadata",
@@ -60,11 +92,10 @@ class Web3Facade {
           }
         );
       }
-    } else if (startsWith("ipfs")) {
-      let [, uri] = tokenURI.split("ipfs://");
+    } else if (startsWith(tokenURI, "ipfs")) {
       try {
-        uri = uri.replace("ipfs/", "");
-        const ipfsUrl = `https://ipfs.io/ipfs/${uri}`;
+        const uri = tokenURI.replace("{id}", nftCollateralId);
+        const ipfsUrl = sanitizeIpfsUri(uri);
         const result = await axios.get(ipfsUrl);
         return result.data;
       } catch (err) {

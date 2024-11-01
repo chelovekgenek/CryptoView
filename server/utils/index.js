@@ -7,9 +7,7 @@ const isJsonString = (str) => {
   try {
     JSON.parse(str);
   } catch (err) {
-    console.error("[ERROR] isJsonString failure, return false", {
-      error: JSON.stringify(err),
-    });
+    console.error("[ERROR] isJsonString failure", err);
     return false;
   }
   return true;
@@ -29,11 +27,24 @@ const sanitizeString = (thing) => {
     }
     return sanitizedString;
   } catch (err) {
-    console.log("sanitizeString failure, return original thing", {
-      error: JSON.stringify(err),
-    });
+    console.log("sanitizeString failure", err);
     return thing;
   }
 };
 
-module.exports = { countOccurrences, isJsonString, sanitizeString };
+const startsWith = (str, substr) =>
+  typeof str === "string" && str.substring(0, substr.length) === substr;
+
+const sanitizeIpfsUri = (uri) => {
+  let [, sanitizedUri] = uri.split("ipfs://");
+  sanitizedUri = sanitizedUri.replace("ipfs/", "");
+  return `https://ipfs.io/ipfs/${sanitizedUri}`;
+};
+
+module.exports = {
+  startsWith,
+  countOccurrences,
+  isJsonString,
+  sanitizeString,
+  sanitizeIpfsUri,
+};

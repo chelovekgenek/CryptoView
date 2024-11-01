@@ -21,7 +21,7 @@ const getMetadata = async (req, res) => {
 
   let metadata;
   try {
-    metadata = await Web3Facade.getErc721Metadata(
+    metadata = await Web3Facade.getNFTMetadata(
       req.params.contract,
       req.params.id
     );
@@ -38,7 +38,7 @@ const getMetadata = async (req, res) => {
       name: metadata.name,
       project: metadata.projectName,
       description: metadata.description,
-      image: metadata.imageUrl,
+      image: metadata.imageUrl || metadata.image,
     },
   });
 
