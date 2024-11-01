@@ -1,15 +1,13 @@
 //Config express
 const express = require("express");
-const dotenv = require("dotenv");
-const process = require("process");
 const workoutRoutes = require("./routes/workouts.js");
 const usersRoutes = require("./routes/users.js");
+const nftsRoutes = require("./routes/nfts.js");
 const transactionsRoutes = require("./routes/Transactions.js");
 const userPortfolio = require("./routes/userPortfolio.js");
 const mongoose = require("mongoose");
 const cors = require("cors");
-
-dotenv.config();
+const config = require("./config.js");
 
 const app = express();
 
@@ -34,18 +32,19 @@ app.use("/api/workouts/", workoutRoutes);
 app.use("/api/portfolio/", userPortfolio);
 app.use("/api/transactions/", transactionsRoutes);
 app.use("/api/users/", usersRoutes);
+app.use("/api/nfts", nftsRoutes);
 
 //connect to db et lancement du server
 mongoose
-  .connect(process.env.MONG_URI)
+  .connect(config.mongoUri)
   .then(() => {
     // listen requests
     console.log(`connected to db`);
   })
-  .catch((error) => {
+  .catch(() => {
     // console.log(error);
   });
 
-app.listen(process.env.PORT, () => {
-  console.log(`listening on port ${process.env.PORT}`);
+app.listen(config.port, () => {
+  console.log(`listening on port ${config.port}`);
 });
